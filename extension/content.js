@@ -130,38 +130,48 @@ function removeUIOverlay() {
 
 // 4. Observe captions from YouTube player
 let captionObserver = null;
+let lastCaptionText = '';
+
 function setupCaptionObserver() {
   if (captionObserver) captionObserver.disconnect();
 
-  const captionContainer = document.querySelector('.ytp-caption-window-container');
-  if (!captionContainer) {
-    // Retry finding caption container every 2 seconds if not immediately found
+  const playerContainer = document.querySelector('#movie_player') || document.querySelector('.html5-video-player');
+  if (!playerContainer) {
+    // Retry finding video player container if not immediately found
     setTimeout(setupCaptionObserver, 2000);
     return;
   }
 
-  console.log('The Learning Agent: Caption container found. Starting observer.');
+  console.log('The Learning Agent: Subtitle observer attached to video player.');
+  
   captionObserver = new MutationObserver((mutations) => {
     if (!sessionActive) return;
-    
-    mutations.forEach((mutation) => {
-      if (mutation.addedNodes.length > 0) {
-        // Read text content from active caption segments
-        const segments = Array.from(document.querySelectorAll('.ytp-caption-segment'));
-        const fullText = segments.map(seg => seg.textContent.trim()).join(' ');
 
-        if (fullText && !processedTexts.has(fullText)) {
-          processedTexts.add(fullText);
-          
-          // Basic clean up
-          const cleanText = fullText.replace(/\n/g, ' ').replace(/\s+/g, ' ');
-          handleNewTextSegment(cleanText);
-        }
+    // Find the caption container dynamically
+    const captionContainer = document.querySelector('.ytp-caption-window-container');
+    if (!captionContainer) return;
+
+    const currentText = captionContainer.innerText.trim().replace(/\s+/g, ' ');
+    if (!currentText) return;
+
+    if (currentText !== lastCaptionText) {
+      let newText = '';
+      if (currentText.startsWith(lastCaptionText)) {
+        // If it's a continuation of the same caption card, extract only the new words
+        newText = currentText.substring(lastCaptionText.length).trim();
+      } else {
+        // If it's a new caption card, capture the whole text
+        newText = currentText;
       }
-    });
+
+      if (newText) {
+        handleNewTextSegment(newText);
+      }
+      lastCaptionText = currentText;
+    }
   });
 
-  captionObserver.observe(captionContainer, { childList: true, subtree: true });
+  captionObserver.observe(playerContainer, { childList: true, subtree: true });
 }
 
 // 5. Buffer Live Transcript & Throttled Backend API Processing
@@ -268,7 +278,8 @@ function removeKeyword(term) {
 function appendKeywordToUI(keyword) {
   if (!listContainer) return;
 
-  const cardId = `tla-card-${keyword.term.replace(/\s+/g, '-').toLowerCase()}`;
+  const sanitizedTerm = keyword.term.replace(/\s+/g, '-').toLowerCase();
+  const cardId = `tla-card-${sanitizedTerm}`;
   
   // Prevent duplicate insertion
   if (document.getElementById(cardId)) return;
@@ -281,17 +292,22 @@ function appendKeywordToUI(keyword) {
     <div class="tla-keyword-row">
       <span class="tla-keyword-name">${keyword.term}</span>
       <div class="tla-keyword-actions">
-        <button class="tla-btn-explain" data-term="${keyword.term}">--></button>
+        <div class="tla-loading-spinner-inline" id="tla-spinner-inline-${sanitizedTerm}"></div>
+        <button class="tla-btn-explain tla-hidden" data-term="${keyword.term}">--></button>
         <button class="tla-btn-remove" data-term="${keyword.term}">×</button>
       </div>
     </div>
     <div class="tla-keyword-explanation tla-collapsed">
-      <div class="tla-loading-spinner tla-hidden"></div>
       <div class="tla-explanation-text">${keyword.shortDescription}</div>
     </div>
   `;
 
   listContainer.appendChild(card);
+
+  const btnExplain = card.querySelector('.tla-btn-explain');
+  const spinnerInline = card.querySelector(`#tla-spinner-inline-${sanitizedTerm}`);
+  const textEl = card.querySelector('.tla-explanation-text');
+  const explanationEl = card.querySelector('.tla-keyword-explanation');
 
   // Cross Option: Remove item
   card.querySelector('.tla-btn-remove').addEventListener('click', (e) => {
@@ -300,56 +316,49 @@ function appendKeywordToUI(keyword) {
     removeKeyword(term);
   });
 
-  // Arrow option: Tell about topic / explain
-  card.querySelector('.tla-btn-explain').addEventListener('click', async (e) => {
-    const btn = e.target;
-    const term = btn.getAttribute('data-term');
-    const explanationEl = card.querySelector('.tla-keyword-explanation');
-    const textEl = card.querySelector('.tla-explanation-text');
-    const spinner = card.querySelector('.tla-loading-spinner');
-
+  // Arrow option: Toggle explanation (instant since pre-generated)
+  btnExplain.addEventListener('click', () => {
     if (explanationEl.classList.contains('tla-collapsed')) {
       explanationEl.classList.remove('tla-collapsed');
-      btn.innerText = '<--';
-      
-      // If we don't have a deep explanation, query the API to get examples and explanations
-      if (textEl.getAttribute('data-loaded') !== 'true') {
-        spinner.classList.remove('tla-hidden');
-        textEl.classList.add('tla-hidden');
-        
-        try {
-          const response = await fetch(`${BACKEND_URL}/api/explain`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              term: term,
-              context: activeProfile ? activeProfile.topic : ''
-            })
-          });
-          
-          if (!response.ok) throw new Error('Explain API failed');
-          const data = await response.json();
-          
-          textEl.innerHTML = `
-            <p>${data.explanation}</p>
-            ${data.example ? `<div class="tla-example"><strong>Example:</strong><pre><code>${data.example}</code></pre></div>` : ''}
-          `;
-          textEl.setAttribute('data-loaded', 'true');
-        } catch (err) {
-          textEl.innerHTML = `<p>${keyword.shortDescription}</p><p style="color:#ef4444;font-size:11px;">Failed to fetch deep explanation.</p>`;
-        } finally {
-          spinner.classList.add('tla-hidden');
-          textEl.classList.remove('tla-hidden');
-        }
-      }
+      btnExplain.innerText = '<--';
     } else {
       explanationEl.classList.add('tla-collapsed');
-      btn.innerText = '-->';
+      btnExplain.innerText = '-->';
     }
   });
 
   // Scroll to bottom of list
   listContainer.scrollTop = listContainer.scrollHeight;
+
+  // Background Pre-Generation: Call Explain API immediately
+  (async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/explain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          term: keyword.term,
+          context: activeProfile ? activeProfile.topic : ''
+        })
+      });
+      
+      if (!response.ok) throw new Error('Explain API failed');
+      const data = await response.json();
+      
+      // Update explanation container with deep content
+      textEl.innerHTML = `
+        <p>${data.explanation}</p>
+        ${data.example ? `<div class="tla-example"><strong>Example:</strong><pre><code>${data.example}</code></pre></div>` : ''}
+      `;
+    } catch (err) {
+      console.warn('The Learning Agent: Failed to pre-generate explanation for', keyword.term, err);
+      // Fallback is already inside the container (shortDescription)
+    } finally {
+      // Hide spinner, show arrow button
+      if (spinnerInline) spinnerInline.remove();
+      if (btnExplain) btnExplain.classList.remove('tla-hidden');
+    }
+  })();
 }
 
 // 8. Document Picture-in-Picture logic

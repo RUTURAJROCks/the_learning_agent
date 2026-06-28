@@ -243,3 +243,17 @@ chrome.storage.local.get(['learningProfile', 'sessionActive'], (res) => {
     logActivity(`Restored active session for "${res.learningProfile.topic}".`);
   }
 });
+
+// Listen for newly added keywords and log them in real-time
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.sessionKeywords) {
+    const oldVal = changes.sessionKeywords.oldValue || [];
+    const newVal = changes.sessionKeywords.newValue || [];
+    if (newVal.length > oldVal.length) {
+      const added = newVal.filter(x => !oldVal.some(y => y.term === x.term));
+      added.forEach(kw => {
+        logActivity(`Keyword detected: "${kw.term}" - ${kw.shortDescription}`);
+      });
+    }
+  }
+});

@@ -234,6 +234,18 @@
   margin: 6px auto;
 }
 
+.tla-loading-spinner-inline {
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top: 2px solid #d946ef;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: tla-spin 1s linear infinite;
+  margin-right: 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .tla-hidden {
   display: none !important;
 }
