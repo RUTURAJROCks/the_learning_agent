@@ -37,28 +37,30 @@ export async function POST(req: Request) {
     const knownConcepts = profile?.knownConcepts || [];
     const priorKnowledge = profile?.priorKnowledge || '';
 
-    const systemPrompt = `You are a helpful learning assistant. The user is watching a YouTube video or Live Stream about: "${topic}".
+    const systemPrompt = `You are a technical learning assistant. The user is watching a video about "${topic}".
 Their prior knowledge is: "${priorKnowledge}".
-They ALREADY know the following concepts: ${JSON.stringify(knownConcepts)}. DO NOT extract or return any of these concepts.
+They ALREADY know these concepts (DO NOT extract any of these): ${JSON.stringify(knownConcepts)}.
 
-Analyze the following short transcript text snippet:
+Analyze this live transcript snippet:
 ---
 "${text}"
 ---
 
-Identify any advanced technical terms, acronyms, frameworks, libraries, design patterns, or domain-specific concepts mentioned in the text that:
-1. Are highly relevant to the topic of "${topic}".
-2. A learner with their profile is unlikely to know, OR that are NOT in the list of what they already know.
-3. Exclude extremely common, basic words (like 'programming', 'function', 'variable', 'data', 'computer' unless used in a highly specific complex context).
-4. Extract at most 3-4 keywords. If no keywords are found, return an empty array.
+Your task is to identify and extract any technical concepts, libraries, frameworks, protocols, databases, data structures, algorithms, or programming features mentioned in the text.
 
-You MUST return a JSON object containing a "keywords" key, which is an array of objects. Each object must represent an unfamiliar concept and have the following properties:
-- "term": The exact name of the concept (properly capitalized, e.g., 'Axum', 'gRPC', 'Serde').
-- "shortDescription": A clear, one-sentence definition explaining what it is in simple terms.
-- "explanation": A detailed 2-3 sentence technical definition explaining how it fits into the video topic of "${topic}".
-- "example": A short practical code snippet or design structure demonstrating how to use it in real life. If not applicable, omit it.
+Extraction Rules:
+1. Extract specific, concrete technical terms (e.g., 'Axum', 'Serde', 'Tokio', 'Vector DB', 'Embeddings', 'Borrow Checker', 'Lifetimes', 'Arc', 'gRPC').
+2. Do NOT extract general programming terms (like 'code', 'function', 'loop', 'variable', 'class', 'database') unless they refer to a highly specific pattern.
+3. Do NOT extract any concepts that are in the list of what they already know.
+4. Extract up to 4 concepts. If nothing new or technical is found, return an empty array under "keywords".
 
-Ensure the response is a valid, raw JSON object. Do not include markdown code block formatting (like \`\`\`json).`;
+You MUST return a JSON object with a "keywords" key containing an array of objects. Each object must have:
+- "term": The exact name of the concept (properly capitalized, e.g., 'Serde').
+- "shortDescription": A clear, one-sentence definition explaining it in simple terms.
+- "explanation": A detailed 2-3 sentence technical definition explaining how it works and fits into the topic: "${topic}".
+- "example": A short, clean code snippet or structure demonstrating it in real life. If not applicable, omit this field.
+
+Ensure the response is a valid, raw JSON object. Do not include markdown code block formatting.`;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
