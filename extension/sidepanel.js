@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://the-learning-agent-rajas-projects-90b54f35.vercel.app'; // Change to Vercel URL in production
+const BACKEND_URL = 'http://localhost:3000'; // Change to Vercel URL in production
 
 // UI Elements
 const stepSetup = document.getElementById('step-setup');
@@ -224,7 +224,7 @@ btnTogglePip.addEventListener('click', () => {
 
 // 7. Restart / Reset Session
 btnRestart.addEventListener('click', async () => {
-  await chrome.storage.local.remove(['learningProfile', 'sessionActive']);
+  await chrome.storage.local.remove(['learningProfile', 'sessionActive', 'sessionKeywords']);
   if (currentTabId) {
     chrome.tabs.sendMessage(currentTabId, { action: 'STOP_SESSION' });
   }
