@@ -129,10 +129,12 @@ function removeUIOverlay() {
 }
 
 // 4. Observe captions from YouTube player
+let playerObserver = null;
 let captionObserver = null;
 let lastCaptionText = '';
 
 function setupCaptionObserver() {
+  if (playerObserver) playerObserver.disconnect();
   if (captionObserver) captionObserver.disconnect();
 
   const playerContainer = document.querySelector('#movie_player') || document.querySelector('.html5-video-player');
@@ -142,36 +144,58 @@ function setupCaptionObserver() {
     return;
   }
 
-  console.log('The Learning Agent: Subtitle observer attached to video player.');
-  
-  captionObserver = new MutationObserver((mutations) => {
+  console.log('The Learning Agent: Subtitle observer system initialized.');
+
+  // Helper to attach observer directly to the caption window
+  function attachToCaptionContainer(container) {
+    if (captionObserver) captionObserver.disconnect();
+    
+    console.log('The Learning Agent: Subtitle window detected. Observing subtitle changes...');
+    
+    captionObserver = new MutationObserver(() => {
+      if (!sessionActive) return;
+      
+      const currentText = container.textContent.trim().replace(/\s+/g, ' ');
+      if (!currentText) return;
+
+      if (currentText !== lastCaptionText) {
+        let newText = '';
+        if (currentText.startsWith(lastCaptionText)) {
+          // Extract only the new words appended to the current card
+          newText = currentText.substring(lastCaptionText.length).trim();
+        } else {
+          // Capture the whole text for a new card
+          newText = currentText;
+        }
+
+        if (newText) {
+          console.log('The Learning Agent: Captured text ->', newText);
+          handleNewTextSegment(newText);
+        }
+        lastCaptionText = currentText;
+      }
+    });
+
+    captionObserver.observe(container, { childList: true, characterData: true, subtree: true });
+  }
+
+  // 1. Check if the caption window is already loaded
+  const existingContainer = document.querySelector('.ytp-caption-window-container');
+  if (existingContainer) {
+    attachToCaptionContainer(existingContainer);
+  }
+
+  // 2. Observe direct child additions of the player (lightweight) to see when subtitles are toggled on/off
+  playerObserver = new MutationObserver(() => {
     if (!sessionActive) return;
-
-    // Find the caption container dynamically
-    const captionContainer = document.querySelector('.ytp-caption-window-container');
-    if (!captionContainer) return;
-
-    const currentText = captionContainer.innerText.trim().replace(/\s+/g, ' ');
-    if (!currentText) return;
-
-    if (currentText !== lastCaptionText) {
-      let newText = '';
-      if (currentText.startsWith(lastCaptionText)) {
-        // If it's a continuation of the same caption card, extract only the new words
-        newText = currentText.substring(lastCaptionText.length).trim();
-      } else {
-        // If it's a new caption card, capture the whole text
-        newText = currentText;
-      }
-
-      if (newText) {
-        handleNewTextSegment(newText);
-      }
-      lastCaptionText = currentText;
+    
+    const container = document.querySelector('.ytp-caption-window-container');
+    if (container) {
+      attachToCaptionContainer(container);
     }
   });
 
-  captionObserver.observe(playerContainer, { childList: true, subtree: true });
+  playerObserver.observe(playerContainer, { childList: true, subtree: false });
 }
 
 // 5. Buffer Live Transcript & Throttled Backend API Processing
