@@ -312,25 +312,26 @@ function appendKeywordToUI(keyword) {
   card.className = 'tla-keyword-card';
   card.id = cardId;
 
+  // Render the expanded contents directly since they are already pre-generated in the batch response!
   card.innerHTML = `
     <div class="tla-keyword-row">
       <span class="tla-keyword-name">${keyword.term}</span>
       <div class="tla-keyword-actions">
-        <div class="tla-loading-spinner-inline" id="tla-spinner-inline-${sanitizedTerm}"></div>
-        <button class="tla-btn-explain tla-hidden" data-term="${keyword.term}">--></button>
+        <button class="tla-btn-explain" data-term="${keyword.term}">--></button>
         <button class="tla-btn-remove" data-term="${keyword.term}">×</button>
       </div>
     </div>
     <div class="tla-keyword-explanation tla-collapsed">
-      <div class="tla-explanation-text">${keyword.shortDescription}</div>
+      <div class="tla-explanation-text">
+        <p>${keyword.explanation || keyword.shortDescription}</p>
+        ${keyword.example ? `<div class="tla-example"><strong>Example:</strong><pre><code>${keyword.example}</code></pre></div>` : ''}
+      </div>
     </div>
   `;
 
   listContainer.appendChild(card);
 
   const btnExplain = card.querySelector('.tla-btn-explain');
-  const spinnerInline = card.querySelector(`#tla-spinner-inline-${sanitizedTerm}`);
-  const textEl = card.querySelector('.tla-explanation-text');
   const explanationEl = card.querySelector('.tla-keyword-explanation');
 
   // Cross Option: Remove item
@@ -353,36 +354,6 @@ function appendKeywordToUI(keyword) {
 
   // Scroll to bottom of list
   listContainer.scrollTop = listContainer.scrollHeight;
-
-  // Background Pre-Generation: Call Explain API immediately
-  (async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/explain`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          term: keyword.term,
-          context: activeProfile ? activeProfile.topic : ''
-        })
-      });
-      
-      if (!response.ok) throw new Error('Explain API failed');
-      const data = await response.json();
-      
-      // Update explanation container with deep content
-      textEl.innerHTML = `
-        <p>${data.explanation}</p>
-        ${data.example ? `<div class="tla-example"><strong>Example:</strong><pre><code>${data.example}</code></pre></div>` : ''}
-      `;
-    } catch (err) {
-      console.warn('The Learning Agent: Failed to pre-generate explanation for', keyword.term, err);
-      // Fallback is already inside the container (shortDescription)
-    } finally {
-      // Hide spinner, show arrow button
-      if (spinnerInline) spinnerInline.remove();
-      if (btnExplain) btnExplain.classList.remove('tla-hidden');
-    }
-  })();
 }
 
 // 8. Document Picture-in-Picture logic

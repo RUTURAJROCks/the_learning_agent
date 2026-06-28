@@ -59,6 +59,8 @@ Identify any advanced technical terms, acronyms, frameworks, libraries, design p
 For each concept, provide:
 - 'term': The exact name of the concept (properly capitalized, e.g., 'Axum', 'gRPC', 'Serde').
 - 'shortDescription': A clear, one-sentence definition explaining what it is in simple terms.
+- 'explanation': A detailed 2-3 sentence technical definition explaining how it fits into the video topic of "${topic}".
+- 'example': A short practical code snippet or design structure demonstrating how to use it in real life. If not applicable, omit it.
 
 Return the response in a structured JSON format following the schema provided.`;
 
@@ -78,9 +80,17 @@ Return the response in a structured JSON format following the schema provided.`;
               shortDescription: { 
                 type: "string", 
                 description: "A 1-sentence description suitable for a quick learning overlay." 
+              },
+              explanation: {
+                type: "string",
+                description: "A detailed 2-3 sentence technical explanation of the concept."
+              },
+              example: {
+                type: "string",
+                description: "A short, practical code snippet or layout example. Omit or leave empty if not applicable."
               }
             },
-            required: ["term", "shortDescription"]
+            required: ["term", "shortDescription", "explanation"]
           }
         }
       },
