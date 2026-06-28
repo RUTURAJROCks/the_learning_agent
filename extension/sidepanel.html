@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Learning Agent - Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.6);
+      --border: rgba(63, 63, 70, 0.4);
+      --primary: #d946ef;
+      --secondary: #a855f7;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    p.subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--glass-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], textarea {
+      font-family: 'Outfit', sans-serif;
+      background: rgba(9, 9, 11, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #27272a;
+      color: #71717a;
+      cursor: not-allowed;
+      transform: none;
+      opacity: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Quiz Styling */
+    .question-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .q-number {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    .q-text {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .option-btn {
+      background: rgba(39, 39, 42, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 400;
+    }
+
+    .option-btn:hover {
+      background: rgba(217, 70, 239, 0.15);
+      border-color: var(--primary);
+    }
+
+    .option-btn.selected {
+      background: linear-gradient(135deg, rgba(217, 70, 239, 0.2), rgba(168, 85, 247, 0.2));
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Active Session Styling */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      align-self: center;
+      margin-bottom: 12px;
+    }
+
+    .status-badge.waiting {
+      background: rgba(234, 179, 8, 0.1);
+      color: #eab308;
+    }
+
+    .live-status {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .live-log {
+      background: rgba(9, 9, 11, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: left;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .loader {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Learning Agent</h1>
+    <p class="subtitle">Personalized Real-time Learning Partner</p>
+  </header>
+
+  <div class="container">
+    <!-- STEP 1: Onboarding Setup -->
+    <div id="step-setup" class="card">
+      <div class="form-group">
+        <label for="input-topic">What are you learning?</label>
+        <input type="text" id="input-topic" placeholder="e.g. RAG in Rust, Machine Learning basics..." value="RAG in Rust">
+      </div>
+      <div class="form-group">
+        <label for="input-prior">What do you already know about this? (Optional)</label>
+        <textarea id="input-prior" placeholder="e.g. I know Rust basics, but don't know databases or vector search..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Active Video Link</label>
+        <input type="text" id="input-url" readonly placeholder="Waiting to detect YouTube video..." style="background: rgba(39, 39, 42, 0.2); cursor: not-allowed;">
+      </div>
+      <button id="btn-generate-quiz">
+        <span>Generate Diagnostic Quiz</span>
+      </button>
+    </div>
+
+    <!-- STEP 2: Loading State -->
+    <div id="step-loading" class="card hidden">
+      <div style="text-align: center; padding: 20px 0; display: flex; flex-direction: column; gap: 16px;">
+        <div class="loader"></div>
+        <p id="loading-text">Analyzing topic and generating quiz...</p>
+      </div>
+    </div>
+
+    <!-- STEP 3: Diagnostic Quiz -->
+    <div id="step-quiz" class="card hidden">
+      <div class="question-card">
+        <div class="q-number" id="quiz-progress">Question 1 of 5</div>
+        <div class="q-text" id="quiz-question">Loading question...</div>
+        <div class="options-list" id="quiz-options">
+          <!-- Dynamically populated options -->
+        </div>
+        <button id="btn-next-question" disabled style="margin-top: 12px;">
+          <span>Next Question</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Live Learning Control Panel -->
+    <div id="step-learning" class="card hidden">
+      <div class="live-status">
+        <div class="status-badge" id="session-status">
+          <span style="display:inline-block; width:8px; height:8px; background-color:#22c55e; border-radius:50%; animation: pulse 1.5s infinite;"></span>
+          Monitoring Live Captions
+        </div>
+        <h3 style="font-size: 18px; font-weight: 600;">Active Learning Session</h3>
+        <p class="subtitle" style="font-size:12px;">We are analyzing subtitles. Keywords you don't know will appear as overlays on the video.</p>
+        
+        <button id="btn-toggle-pip" style="background: #27272a; border: 1px solid var(--border); color: var(--text);">
+          <span>Toggle Floating overlay (Always-on-top)</span>
+        </button>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-restart" style="flex: 1; background: transparent; border: 1px solid #ef4444; color: #ef4444; font-size:13px; padding: 8px;">
+            Reset Session
+          </button>
+        </div>
+
+        <div style="text-align: left; margin-top: 8px;">
+          <label>Activity Log</label>
+          <div class="live-log" id="activity-log">Session started. Waiting for caption activity...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

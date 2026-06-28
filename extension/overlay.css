@@ -1,0 +1,262 @@
+/* Root Overlay Container injected inside movie_player */
+#tla-overlay-root {
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  width: 320px;
+  max-height: 80%;
+  z-index: 2147483647; /* Ensure it is on top of YouTube elements */
+  font-family: 'Outfit', sans-serif;
+  color: #f4f4f5;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto; /* Allow interactions */
+}
+
+/* Hidden state */
+#tla-overlay-root.tla-hidden {
+  display: none !important;
+}
+
+/* When popped out in Picture-in-Picture window, hide the main overlay container */
+#tla-overlay-root.tla-in-pip {
+  display: none !important;
+}
+
+/* Reset baseline defaults within our elements to prevent YouTube style leakage */
+.tla-reset * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* The Main Card Panel */
+.tla-card {
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header Section */
+.tla-header {
+  background: rgba(24, 24, 27, 0.4);
+  border-bottom: 1px solid rgba(63, 63, 70, 0.3);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tla-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #d946ef, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tla-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.tla-controls button {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  font-size: 16px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.tla-controls button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4f4f5;
+}
+
+/* Scrollable Content */
+.tla-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Empty State */
+.tla-empty-state {
+  color: #71717a;
+  font-size: 12px;
+  text-align: center;
+  padding: 24px 12px;
+  font-style: italic;
+}
+
+/* Keyword Card */
+.tla-keyword-card {
+  background: rgba(39, 39, 42, 0.4);
+  border: 1px solid rgba(63, 63, 70, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.tla-keyword-card:hover {
+  border-color: rgba(217, 70, 239, 0.4);
+  background: rgba(39, 39, 42, 0.6);
+}
+
+.tla-keyword-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tla-keyword-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f4f4f5;
+}
+
+.tla-keyword-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.tla-keyword-actions button {
+  background: rgba(24, 24, 27, 0.8);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  color: #a1a1aa;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.tla-keyword-actions button.tla-btn-explain {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.tla-keyword-actions button:hover {
+  background: rgba(217, 70, 239, 0.2);
+  border-color: #d946ef;
+  color: #f4f4f5;
+}
+
+/* Explanation Container */
+.tla-keyword-explanation {
+  margin-top: 8px;
+  border-top: 1px solid rgba(63, 63, 70, 0.2);
+  padding-top: 8px;
+  font-size: 13px;
+  color: #d4d4d8;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease;
+  max-height: 300px;
+  overflow: hidden;
+  opacity: 1;
+}
+
+.tla-keyword-explanation.tla-collapsed {
+  max-height: 0;
+  padding-top: 0;
+  margin-top: 0;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tla-explanation-text p {
+  margin-bottom: 8px;
+}
+
+/* Coding Example Box */
+.tla-example {
+  background: #09090b;
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 6px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.tla-example strong {
+  font-size: 11px;
+  color: #d946ef;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tla-example pre {
+  margin: 0;
+  overflow-x: auto;
+}
+
+.tla-example code {
+  font-size: 11px;
+  color: #a7f3d0;
+}
+
+/* Spinner Loader */
+.tla-loading-spinner {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #d946ef;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: tla-spin 1s linear infinite;
+  margin: 6px auto;
+}
+
+.tla-hidden {
+  display: none !important;
+}
+
+@keyframes tla-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Custom Scrollbar for Overlay Panel */
+.tla-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tla-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.tla-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.tla-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

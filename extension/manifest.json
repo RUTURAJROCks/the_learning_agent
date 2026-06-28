@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "The Learning Agent",
+  "version": "1.0.0",
+  "description": "Learn in real-time while watching YouTube videos and live streams with an always-on-top overlay.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["overlay.css"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Learning Side Panel"
+  }
+}
