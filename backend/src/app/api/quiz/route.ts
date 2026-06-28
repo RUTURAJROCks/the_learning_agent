@@ -1,9 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,9 +26,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY environment variable is not configured' },
+        { error: 'OPENROUTER_API_KEY environment variable is not configured' },
         { status: 500, headers: corsHeaders }
       );
     }
@@ -44,62 +41,41 @@ Each question MUST:
 2. Have 4 plausible options, with exactly one correct option.
 3. Be designed to differentiate between a beginner and an intermediate student.
 
-Return the response in a structured JSON format following the schema provided.`;
+You MUST return a JSON object containing a "questions" key, which is an array of exactly 5 objects. Each object must have the following properties:
+- "concept": The specific technical concept/term tested (e.g., 'Smart Pointers', 'Vector database').
+- "text": The question text.
+- "options": An array of exactly 4 strings representing multiple-choice options.
+- "correctAnswer": The exact correct answer (must match one of the items in 'options').
 
-    const responseSchema = {
-      type: "object",
-      properties: {
-        questions: {
-          type: "array",
-          minItems: 5,
-          maxItems: 5,
-          description: "An array of exactly 5 quiz questions.",
-          items: {
-            type: "object",
-            properties: {
-              concept: { 
-                type: "string", 
-                description: "The specific technical concept/term tested (e.g., 'Smart Pointers', 'Vector database')."
-              },
-              text: { 
-                type: "string", 
-                description: "The question text."
-              },
-              options: {
-                type: "array",
-                minItems: 4,
-                maxItems: 4,
-                items: { type: "string" },
-                description: "Four multiple-choice options."
-              },
-              correctAnswer: { 
-                type: "string", 
-                description: "The exact correct answer (must match one of the items in 'options')."
-              }
-            },
-            required: ["concept", "text", "options", "correctAnswer"]
-          }
-        }
+Ensure the response is a valid, raw JSON object. Do not include markdown code block formatting (like \`\`\`json).`;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      required: ["questions"]
-    };
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: systemPrompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0.2
-      }
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash:free',
+        messages: [
+          { role: 'user', content: systemPrompt }
+        ],
+        response_format: { type: 'json_object' }
+      })
     });
 
-    const text = response.text;
-    if (!text) {
-      throw new Error('Empty response from Gemini API');
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter API failed: ${response.status} - ${errText}`);
     }
 
-    const parsedData = JSON.parse(text);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenRouter API');
+    }
+
+    const parsedData = JSON.parse(content.trim());
     return NextResponse.json(parsedData, { headers: corsHeaders });
 
   } catch (error: any) {

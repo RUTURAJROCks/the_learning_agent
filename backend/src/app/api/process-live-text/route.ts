@@ -1,9 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,9 +26,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured' },
+        { error: 'OPENROUTER_API_KEY environment variable is not configured' },
         { status: 500, headers: corsHeaders }
       );
     }
@@ -40,7 +37,6 @@ export async function POST(req: Request) {
     const knownConcepts = profile?.knownConcepts || [];
     const priorKnowledge = profile?.priorKnowledge || '';
 
-    // Create a strict instruction prompt to find unfamiliar terms
     const systemPrompt = `You are a helpful learning assistant. The user is watching a YouTube video or Live Stream about: "${topic}".
 Their prior knowledge is: "${priorKnowledge}".
 They ALREADY know the following concepts: ${JSON.stringify(knownConcepts)}. DO NOT extract or return any of these concepts.
@@ -56,63 +52,41 @@ Identify any advanced technical terms, acronyms, frameworks, libraries, design p
 3. Exclude extremely common, basic words (like 'programming', 'function', 'variable', 'data', 'computer' unless used in a highly specific complex context).
 4. Extract at most 3-4 keywords. If no keywords are found, return an empty array.
 
-For each concept, provide:
-- 'term': The exact name of the concept (properly capitalized, e.g., 'Axum', 'gRPC', 'Serde').
-- 'shortDescription': A clear, one-sentence definition explaining what it is in simple terms.
-- 'explanation': A detailed 2-3 sentence technical definition explaining how it fits into the video topic of "${topic}".
-- 'example': A short practical code snippet or design structure demonstrating how to use it in real life. If not applicable, omit it.
+You MUST return a JSON object containing a "keywords" key, which is an array of objects. Each object must represent an unfamiliar concept and have the following properties:
+- "term": The exact name of the concept (properly capitalized, e.g., 'Axum', 'gRPC', 'Serde').
+- "shortDescription": A clear, one-sentence definition explaining what it is in simple terms.
+- "explanation": A detailed 2-3 sentence technical definition explaining how it fits into the video topic of "${topic}".
+- "example": A short practical code snippet or design structure demonstrating how to use it in real life. If not applicable, omit it.
 
-Return the response in a structured JSON format following the schema provided.`;
+Ensure the response is a valid, raw JSON object. Do not include markdown code block formatting (like \`\`\`json).`;
 
-    const responseSchema = {
-      type: "object",
-      properties: {
-        keywords: {
-          type: "array",
-          description: "A list of newly extracted unfamiliar concepts.",
-          items: {
-            type: "object",
-            properties: {
-              term: { 
-                type: "string", 
-                description: "The name of the term/concept (e.g. 'Tokio', 'B-Tree')." 
-              },
-              shortDescription: { 
-                type: "string", 
-                description: "A 1-sentence description suitable for a quick learning overlay." 
-              },
-              explanation: {
-                type: "string",
-                description: "A detailed 2-3 sentence technical explanation of the concept."
-              },
-              example: {
-                type: "string",
-                description: "A short, practical code snippet or layout example. Omit or leave empty if not applicable."
-              }
-            },
-            required: ["term", "shortDescription", "explanation"]
-          }
-        }
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      required: ["keywords"]
-    };
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: systemPrompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0.1
-      }
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash:free',
+        messages: [
+          { role: 'user', content: systemPrompt }
+        ],
+        response_format: { type: 'json_object' }
+      })
     });
 
-    const outputText = response.text;
-    if (!outputText) {
-      throw new Error('Empty response from Gemini');
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter API failed: ${response.status} - ${errText}`);
     }
 
-    const parsedData = JSON.parse(outputText);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenRouter API');
+    }
+
+    const parsedData = JSON.parse(content.trim());
     return NextResponse.json(parsedData, { headers: corsHeaders });
 
   } catch (error: any) {

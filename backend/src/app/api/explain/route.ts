@@ -1,9 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,54 +26,50 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured' },
+        { error: 'OPENROUTER_API_KEY environment variable is not configured' },
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const systemPrompt = `You are an expert technical tutor.
-Explain the technical term: "${term}"
-In the context of learning about: "${context || 'software development'}".
+    const systemPrompt = `You are a technical tutor.
+Provide a clear technical explanation and a short, practical coding example for the term: "${term}".
+The context of the user's learning session is: "${context || 'General technical learning'}".
 
-Please provide:
-1. A clear, intuitive, and concise explanation (1 to 2 paragraphs) of what the concept is and why it matters, using simple analogies if appropriate.
-2. A short, concrete, practical example. If it is a programming topic, provide a clean, code snippet (e.g. in Rust, TS, or Python). Do not write any markdown fences inside the JSON string values, just write the raw code or text example.
+You MUST return a JSON object with the following properties:
+- "explanation": A detailed, 2-3 sentence paragraph technical definition.
+- "example": A short, practical code snippet or step-by-step example illustrating the term. If not applicable, omit it.
 
-Return the response in a structured JSON format following the schema provided.`;
+Ensure the response is a valid, raw JSON object. Do not include markdown code block formatting (like \`\`\`json).`;
 
-    const responseSchema = {
-      type: "object",
-      properties: {
-        explanation: { 
-          type: "string", 
-          description: "The paragraph explanation of the term." 
-        },
-        example: { 
-          type: "string", 
-          description: "A short, practical code snippet or step-by-step example illustrating the term." 
-        }
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      required: ["explanation", "example"]
-    };
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: systemPrompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0.3
-      }
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash:free',
+        messages: [
+          { role: 'user', content: systemPrompt }
+        ],
+        response_format: { type: 'json_object' }
+      })
     });
 
-    const outputText = response.text;
-    if (!outputText) {
-      throw new Error('Empty response from Gemini');
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter API failed: ${response.status} - ${errText}`);
     }
 
-    const parsedData = JSON.parse(outputText);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenRouter API');
+    }
+
+    const parsedData = JSON.parse(content.trim());
     return NextResponse.json(parsedData, { headers: corsHeaders });
 
   } catch (error: any) {
