@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const corsHeaders = {
@@ -86,7 +88,7 @@ Return the response in a structured JSON format following the schema provided.`;
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       contents: systemPrompt,
       config: {
         responseMimeType: 'application/json',
