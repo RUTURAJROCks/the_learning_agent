@@ -422,7 +422,9 @@ async function togglePipWindow() {
     // Apply basic body styling in PiP window
     pipWindow.document.body.style.margin = '0';
     pipWindow.document.body.style.backgroundColor = '#09090b';
-    pipWindow.document.body.style.overflow = 'hidden';
+    pipWindow.document.body.style.color = '#f4f4f5';
+    pipWindow.document.body.style.fontFamily = "'Outfit', sans-serif";
+    pipWindow.document.body.style.overflow = 'auto'; // Let the floating window scroll if explanation is expanded
 
     // Move UI Card into PiP window
     pipWindow.document.body.appendChild(cardElement);
