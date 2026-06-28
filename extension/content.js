@@ -1,5 +1,5 @@
 // Configuration
-const BACKEND_URL = 'https://the-learning-agent-rajas-projects-90b54f35.vercel.app';
+const BACKEND_URL = 'http://localhost:3000';
 
 // State variables
 let activeProfile = null;
