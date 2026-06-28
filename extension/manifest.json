@@ -26,5 +26,11 @@
   },
   "action": {
     "default_title": "Open Learning Side Panel"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["overlay.css"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ]
 }
